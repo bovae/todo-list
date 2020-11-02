@@ -17,7 +17,9 @@ export default class App extends Component {
             this.createTodoItem('Drink Coffee'),
             this.createTodoItem('Build Awesome App', true),
             this.createTodoItem('Have a lunch', false, true)
-        ]
+        ],
+        activeTab: 'all',
+        searchFilter: ''
     };
 
     addItem = (label) => {
@@ -60,34 +62,16 @@ export default class App extends Component {
         });
     }
 
-    render() {
-        const {todoData} = this.state;
-        const doneCount = todoData
-            .filter((el) => el.done)
-            .length;
-        const todoCount = todoData.length - doneCount;
+    changeActiveTab = (activeTab) => {
+        this.setState({
+            activeTab
+        });
+    }
 
-        return (
-            <div className="todo-app">
-                <AppHeader
-                    toDo={todoCount}
-                    done={doneCount}/>
-
-                <div className="top-panel d-flex">
-                    <SearchPanel/>
-                    <ItemStatusFilter/>
-                </div>
-
-                <ItemAddForm
-                    onAddButtonClick={this.addItem}/>
-
-                <TodoList
-                    todos={todoData}
-                    onLabelClick={this.updateItemDoneStatus}
-                    onDeleteClick={this.deleteItem}
-                    onImportantClick={this.updateItemImportantStatus}/>
-            </div>
-        );
+    changeSearchFilter = (searchFilter) => {
+        this.setState({
+            searchFilter: searchFilter.trim()
+        });
     }
 
     createTodoItem(label, important = false, done = false) {
@@ -127,5 +111,53 @@ export default class App extends Component {
         }
 
         return newTodoData;
+    }
+
+    render() {
+        const {todoData, activeTab, searchFilter} = this.state;
+        let activeTodoData;
+
+        if (activeTab === 'all') {
+            activeTodoData = todoData.filter((item) => item.label.toLowerCase().includes(searchFilter.toLowerCase()));
+        } else if (activeTab === 'active') {
+            activeTodoData = todoData
+                .filter((item) => !item.done)
+                .filter((item) => item.label.toLowerCase().includes(searchFilter.toLowerCase()));
+        } else if (activeTab === 'done') {
+            activeTodoData = todoData
+                .filter((item) => item.done)
+                .filter((item) => item.label.toLowerCase().includes(searchFilter.toLowerCase()));
+        }
+
+        const doneCount = todoData
+            .filter((item) => item.done)
+            .length;
+        const todoCount = todoData.length - doneCount;
+
+        return (
+            <div className="todo-app">
+                <AppHeader
+                    toDo={todoCount}
+                    done={doneCount}/>
+
+                <div className="top-panel d-flex">
+                    <SearchPanel
+                        searchFilter={searchFilter}
+                        onSearchFilterChange={this.changeSearchFilter}/>
+                    <ItemStatusFilter
+                        activeTab={activeTab}
+                        onTabClick={this.changeActiveTab}/>
+                </div>
+
+                <ItemAddForm
+                    onAddButtonClick={this.addItem}/>
+
+                <TodoList
+                    todos={activeTodoData}
+                    onLabelClick={this.updateItemDoneStatus}
+                    onDeleteClick={this.deleteItem}
+                    onImportantClick={this.updateItemImportantStatus}/>
+            </div>
+        );
     }
 }

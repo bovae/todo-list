@@ -18,7 +18,7 @@ export default class ItemAddForm extends Component {
         e.preventDefault();
         const {label} = this.state;
 
-        if (label) {
+        if (label.trim()) {
             this.props.onAddButtonClick(label);
             this.setState({
                 label: ''
