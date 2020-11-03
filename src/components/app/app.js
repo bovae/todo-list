@@ -23,54 +23,10 @@ export default class App extends Component {
     };
 
     addItem = (label) => {
-        const newTodoItem = this.createTodoItem(label);
-
-        this.setState(({todoData}) => {
-            const newTodoData = [newTodoItem, ...todoData]
-
-            return {
-                todoData: newTodoData
-            };
-        });
-    }
-
-    updateItemDoneStatus = (idToUpdateDoneStatus) => {
         this.setState(({todoData}) => {
             return {
-                todoData: this.togglePropertyAndGenerateTodoData(todoData, idToUpdateDoneStatus, 'done')
+                todoData: [this.createTodoItem(label), ...todoData]
             };
-        });
-    }
-
-    deleteItem = (idToDelete) => {
-        this.setState(({todoData}) => {
-            const idx = todoData.findIndex(({id}) => id === idToDelete);
-
-            const newTodoData = [...todoData.slice(0, idx), ...todoData.slice(idx + 1)];
-
-            return {
-                todoData: newTodoData
-            };
-        });
-    }
-
-    updateItemImportantStatus = (idToUpdateImportantStatus) => {
-        this.setState(({todoData}) => {
-            return {
-                todoData: this.togglePropertyAndGenerateTodoData(todoData, idToUpdateImportantStatus, 'important')
-            };
-        });
-    }
-
-    changeActiveTab = (activeTab) => {
-        this.setState({
-            activeTab
-        });
-    }
-
-    changeSearchFilter = (searchFilter) => {
-        this.setState({
-            searchFilter: searchFilter.trim()
         });
     }
 
@@ -83,9 +39,81 @@ export default class App extends Component {
         }
     }
 
+    deleteItem = (idToDelete) => {
+        this.setState(({todoData}) => {
+            const idx = todoData.findIndex(({id}) => id === idToDelete);
+
+            return {
+                todoData: [...todoData.slice(0, idx), ...todoData.slice(idx + 1)]
+            };
+        });
+    }
+
+    changeActiveTab = (activeTab) => {
+        this.setState({
+            activeTab
+        });
+    }
+
+    changeSearchFilter = (searchFilter) => {
+        this.setState({
+            searchFilter: !searchFilter.trim() ? searchFilter.trim() : searchFilter
+        });
+    }
+
+    filterByActiveTab(todoData, activeTab) {
+        switch (activeTab.toLowerCase()) {
+            default:
+            case 'all':
+                return todoData;
+            case 'active':
+                return todoData.filter(todo => !todo.done);
+            case 'done':
+                return todoData.filter(todo => todo.done);
+        }
+    }
+
+    filterBySearchFilter(todoData, searchFilter) {
+        if (!searchFilter) {
+            return todoData;
+        }
+
+        return todoData.filter(({label}) => label.toLowerCase().includes(searchFilter.trim().toLowerCase()));
+    }
+
+    toggleItemDoneProperty = (idToUpdateDoneStatus) => {
+        this.setState(({todoData}) => {
+            return {
+                todoData: this.togglePropertyAndGenerateTodoData(todoData, idToUpdateDoneStatus, 'done')
+            };
+        });
+    }
+
+    toggleItemImportantProperty = (idToUpdateImportantStatus) => {
+        this.setState(({todoData}) => {
+            return {
+                todoData: this.togglePropertyAndGenerateTodoData(todoData, idToUpdateImportantStatus, 'important')
+            };
+        });
+    }
+
     togglePropertyAndGenerateTodoData(oldTodoData, itemId, propName) {
         const donePropName = 'done';
         const importantPropName = 'important';
+
+        function addDoneElement(todoData, updatedItem, itemIdx, prevDoneProperty) {
+            if (!prevDoneProperty) {
+                return [...todoData.slice(0, itemIdx), ...todoData.slice(itemIdx + 1), updatedItem];
+            }
+            return [updatedItem, ...todoData.slice(0, itemIdx), ...todoData.slice(itemIdx + 1)];
+        }
+
+        function addImportantElement(todoData, updatedItem, itemIdx, prevImportantProperty, prevDoneProperty) {
+            if (!prevImportantProperty && !prevDoneProperty) {
+                return [updatedItem, ...todoData.slice(0, itemIdx), ...todoData.slice(itemIdx + 1)];
+            }
+            return [...todoData.slice(0, itemIdx), updatedItem, ...oldTodoData.slice(itemIdx + 1)];
+        }
 
         const idx = oldTodoData.findIndex(({id}) => id === itemId);
         const oldItem = oldTodoData[idx];
@@ -95,50 +123,29 @@ export default class App extends Component {
             [propName]: !oldItem[propName]
         }
 
-        let newTodoData;
-        if (propName === donePropName) {
-            if (!oldItem[donePropName]) {
-                newTodoData = [...oldTodoData.slice(0, idx), ...oldTodoData.slice(idx + 1), updatedItem];
-            } else {
-                newTodoData = [updatedItem, ...oldTodoData.slice(0, idx), ...oldTodoData.slice(idx + 1)];
-            }
-        } else if (propName === importantPropName) {
-            if (!oldItem[importantPropName] && !oldItem[donePropName]) {
-                newTodoData = [updatedItem, ...oldTodoData.slice(0, idx), ...oldTodoData.slice(idx + 1)];
-            } else {
-                newTodoData = [...oldTodoData.slice(0, idx), updatedItem, ...oldTodoData.slice(idx + 1)];
-            }
+        switch (propName) {
+            case donePropName:
+                return addDoneElement(oldTodoData, updatedItem, idx, oldItem[donePropName]);
+            case importantPropName:
+                return addImportantElement(oldTodoData, updatedItem, idx, oldItem[importantPropName], oldItem[donePropName]);
+            default:
+                return oldTodoData;
         }
-
-        return newTodoData;
     }
 
     render() {
         const {todoData, activeTab, searchFilter} = this.state;
-        let activeTodoData;
 
-        if (activeTab === 'all') {
-            activeTodoData = todoData.filter((item) => item.label.toLowerCase().includes(searchFilter.toLowerCase()));
-        } else if (activeTab === 'active') {
-            activeTodoData = todoData
-                .filter((item) => !item.done)
-                .filter((item) => item.label.toLowerCase().includes(searchFilter.toLowerCase()));
-        } else if (activeTab === 'done') {
-            activeTodoData = todoData
-                .filter((item) => item.done)
-                .filter((item) => item.label.toLowerCase().includes(searchFilter.toLowerCase()));
-        }
+        const filteredTodoData = this.filterBySearchFilter(this.filterByActiveTab(todoData, activeTab), searchFilter);
 
-        const doneCount = todoData
-            .filter((item) => item.done)
-            .length;
+        const doneCount = todoData.filter((item) => item.done).length;
         const todoCount = todoData.length - doneCount;
 
         return (
             <div className="todo-app">
                 <AppHeader
-                    toDo={todoCount}
-                    done={doneCount}/>
+                    done={doneCount}
+                    toDo={todoCount}/>
 
                 <div className="top-panel d-flex">
                     <SearchPanel
@@ -153,10 +160,10 @@ export default class App extends Component {
                     onAddButtonClick={this.addItem}/>
 
                 <TodoList
-                    todos={activeTodoData}
-                    onLabelClick={this.updateItemDoneStatus}
+                    todos={filteredTodoData}
+                    onLabelClick={this.toggleItemDoneProperty}
                     onDeleteClick={this.deleteItem}
-                    onImportantClick={this.updateItemImportantStatus}/>
+                    onImportantClick={this.toggleItemImportantProperty}/>
             </div>
         );
     }
