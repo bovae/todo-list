@@ -8,9 +8,9 @@ export default class ItemAddForm extends Component {
         label: ''
     }
 
-    onLabelChange = (e) => {
+    onLabelChange = ({target: {value}}) => {
         this.setState({
-            label: e.target.value
+            label: !value.trim() ? value.trim() : value
         });
     }
 
