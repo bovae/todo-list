@@ -12,7 +12,7 @@ const TodoList = ({todos, onLabelClick, onDeleteClick, onImportantClick}) => {
                 onLabelClick={() => onLabelClick(todoId)}
                 onDeleteClick={() => onDeleteClick(todoId)}
                 onImportantClick={() => onImportantClick(todoId)}/>
-        )
+        );
     });
 
     return (
