@@ -2,7 +2,7 @@ import React from 'react';
 
 import './todo-list-item.css';
 
-function TodoListItem({id, label, done, important, onLabelClick, onDeleteClick, onImportantClick}) {
+const TodoListItem = ({id, label, done, important, onLabelClick, onDeleteClick, onImportantClick}) => {
 
     let classNames = 'todo-list-item list-group-item';
     if (done) {
