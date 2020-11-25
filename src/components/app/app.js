@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {useState} from 'react';
 
 import AppHeader from '../app-header';
 import SearchPanel from '../search-panel';
@@ -8,96 +8,50 @@ import ItemAddForm from "../item-add-form";
 
 import './app.css';
 
-export default class App extends Component {
+const App = () => {
 
-    idGen = 0;
+    let idGen = 0;
 
-    state = {
-        todoData: [
-            this.createTodoItem('Drink Coffee'),
-            this.createTodoItem('Build Awesome App', true),
-            this.createTodoItem('Have a lunch', false, true)
-        ],
-        activeTab: 'all',
-        searchFilter: ''
-    };
+    const [todoData, setTodoData] = useState([
+        createTodoItem('Drink Coffee'),
+        createTodoItem('Build Awesome App', true),
+        createTodoItem('Have a lunch', false, true)
+    ]);
 
-    addItem = (label) => {
-        this.setState(({todoData}) => {
-            return {
-                todoData: [this.createTodoItem(label), ...todoData]
-            };
+    const [activeTab, setActiveTab] = useState('all');
+
+    const [searchFilter, setSearchFilter] = useState('');
+
+    const addItem = (label) => {
+        setTodoData(prevTodoData => [createTodoItem(label), ...prevTodoData]);
+    }
+
+    const deleteItem = (idToDelete) => {
+        setTodoData(prevTodoData => {
+            const idx = prevTodoData.findIndex(({id}) => id === idToDelete);
+
+            return [...prevTodoData.slice(0, idx), ...prevTodoData.slice(idx + 1)];
+
         });
     }
 
-    createTodoItem(label, important = false, done = false) {
-        return {
-            id: this.idGen++,
-            label,
-            important,
-            done
-        }
+    const changeActiveTab = (newActiveTab) => {
+        setActiveTab(newActiveTab);
     }
 
-    deleteItem = (idToDelete) => {
-        this.setState(({todoData}) => {
-            const idx = todoData.findIndex(({id}) => id === idToDelete);
-
-            return {
-                todoData: [...todoData.slice(0, idx), ...todoData.slice(idx + 1)]
-            };
-        });
+    const changeSearchFilter = (newSearchFilter) => {
+        setSearchFilter(!newSearchFilter.trim() ? newSearchFilter.trim() : newSearchFilter);
     }
 
-    changeActiveTab = (activeTab) => {
-        this.setState({
-            activeTab
-        });
+    const toggleItemDoneProperty = (idToUpdateDoneStatus) => {
+        setTodoData(togglePropertyAndGenerateTodoData(todoData, idToUpdateDoneStatus, 'done'));
     }
 
-    changeSearchFilter = (searchFilter) => {
-        this.setState({
-            searchFilter: !searchFilter.trim() ? searchFilter.trim() : searchFilter
-        });
+    const toggleItemImportantProperty = (idToUpdateImportantStatus) => {
+        setTodoData(togglePropertyAndGenerateTodoData(todoData, idToUpdateImportantStatus, 'important'));
     }
 
-    filterByActiveTab(todoData, activeTab) {
-        switch (activeTab.toLowerCase()) {
-            default:
-            case 'all':
-                return todoData;
-            case 'active':
-                return todoData.filter(todo => !todo.done);
-            case 'done':
-                return todoData.filter(todo => todo.done);
-        }
-    }
-
-    filterBySearchFilter(todoData, searchFilter) {
-        if (!searchFilter) {
-            return todoData;
-        }
-
-        return todoData.filter(({label}) => label.toLowerCase().includes(searchFilter.trim().toLowerCase()));
-    }
-
-    toggleItemDoneProperty = (idToUpdateDoneStatus) => {
-        this.setState(({todoData}) => {
-            return {
-                todoData: this.togglePropertyAndGenerateTodoData(todoData, idToUpdateDoneStatus, 'done')
-            };
-        });
-    }
-
-    toggleItemImportantProperty = (idToUpdateImportantStatus) => {
-        this.setState(({todoData}) => {
-            return {
-                todoData: this.togglePropertyAndGenerateTodoData(todoData, idToUpdateImportantStatus, 'important')
-            };
-        });
-    }
-
-    togglePropertyAndGenerateTodoData(oldTodoData, itemId, propName) {
+    function togglePropertyAndGenerateTodoData(oldTodoData, itemId, propName) {
         const donePropName = 'done';
         const importantPropName = 'important';
 
@@ -133,38 +87,72 @@ export default class App extends Component {
         }
     }
 
-    render() {
-        const {todoData, activeTab, searchFilter} = this.state;
-
-        const filteredTodoData = this.filterBySearchFilter(this.filterByActiveTab(todoData, activeTab), searchFilter);
-
-        const doneCount = todoData.filter((item) => item.done).length;
-        const todoCount = todoData.length - doneCount;
-
-        return (
-            <div className="todo-app">
-                <AppHeader
-                    done={doneCount}
-                    toDo={todoCount}/>
-
-                <div className="top-panel d-flex">
-                    <SearchPanel
-                        searchFilter={searchFilter}
-                        onSearchFilterChange={this.changeSearchFilter}/>
-                    <ItemStatusFilter
-                        activeTab={activeTab}
-                        onTabClick={this.changeActiveTab}/>
-                </div>
-
-                <ItemAddForm
-                    onAddButtonClick={this.addItem}/>
-
-                <TodoList
-                    todos={filteredTodoData}
-                    onLabelClick={this.toggleItemDoneProperty}
-                    onDeleteClick={this.deleteItem}
-                    onImportantClick={this.toggleItemImportantProperty}/>
-            </div>
-        );
+    function createTodoItem(label, important = false, done = false) {
+        return {
+            id: idGen++,
+            label,
+            important,
+            done
+        }
     }
+
+    function filterByActiveTab(todoData, activeTab) {
+        switch (activeTab.toLowerCase()) {
+            default:
+            case 'all':
+                return todoData;
+            case 'active':
+                return todoData.filter(todo => !todo.done);
+            case 'done':
+                return todoData.filter(todo => todo.done);
+        }
+    }
+
+    function filterBySearchFilter(todoData, searchFilter) {
+        if (!searchFilter) {
+            return todoData;
+        }
+
+        return todoData.filter(({label}) => label.toLowerCase().includes(searchFilter.trim().toLowerCase()));
+    }
+
+    function countDoneElements(todoData) {
+        return todoData.filter((item) => item.done).length;
+    }
+
+    function countTodoElements(totalElements, doneElements) {
+        return totalElements - doneElements;
+    }
+
+    const filteredTodoData = filterBySearchFilter(filterByActiveTab(todoData, activeTab), searchFilter);
+    const doneCount = countDoneElements(todoData);
+    const todoCount = countTodoElements(todoData.length, doneCount);
+
+    return (
+        <div className="todo-app">
+            <AppHeader
+                done={doneCount}
+                toDo={todoCount}/>
+
+            <div className="top-panel d-flex">
+                <SearchPanel
+                    searchFilter={searchFilter}
+                    onSearchFilterChange={changeSearchFilter}/>
+                <ItemStatusFilter
+                    activeTab={activeTab}
+                    onTabClick={changeActiveTab}/>
+            </div>
+
+            <ItemAddForm
+                onAddButtonClick={addItem}/>
+
+            <TodoList
+                todos={filteredTodoData}
+                onLabelClick={toggleItemDoneProperty}
+                onDeleteClick={deleteItem}
+                onImportantClick={toggleItemImportantProperty}/>
+        </div>
+    );
 }
+
+export default App;
