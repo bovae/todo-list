@@ -35,10 +35,6 @@ const App = () => {
         });
     }
 
-    const changeActiveTab = (newActiveTab) => {
-        setActiveTab(newActiveTab);
-    }
-
     const changeSearchFilter = (newSearchFilter) => {
         setSearchFilter(!newSearchFilter.trim() ? newSearchFilter.trim() : newSearchFilter);
     }
@@ -140,7 +136,7 @@ const App = () => {
                     onSearchFilterChange={changeSearchFilter}/>
                 <ItemStatusFilter
                     activeTab={activeTab}
-                    onTabClick={changeActiveTab}/>
+                    onTabClick={setActiveTab}/>
             </div>
 
             <ItemAddForm
