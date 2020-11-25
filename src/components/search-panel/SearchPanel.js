@@ -2,15 +2,15 @@ import React from 'react';
 
 import './search-panel.css';
 
-const SearchPanel = (props) => {
+const SearchPanel = ({onSearchFilterChange, searchFilter}) => {
 
     const onLabelChange = (e) => {
         e.preventDefault();
-        props.onSearchFilterChange(e.target.value);
+        onSearchFilterChange(e.target.value);
     }
 
     return <input className="form-control search-panel"
-                  value={props.searchFilter}
+                  value={searchFilter}
                   onChange={onLabelChange}
                   placeholder="Type to search"/>;
 }
