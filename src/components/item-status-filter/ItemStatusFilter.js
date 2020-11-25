@@ -1,37 +1,39 @@
-import React, {Component} from 'react';
+import React from 'react';
 
-export default class ItemStatusFilter extends Component {
+const ItemStatusFilter = (props) => {
 
-    buttons = [this.createButton('all', 'All'),
-        this.createButton('active', 'Active'),
-        this.createButton('done', 'Done')];
+    const buttons = [
+        createButton('all', 'All'),
+        createButton('active', 'Active'),
+        createButton('done', 'Done')
+    ];
 
-    createButton(id, label) {
+    function createButton(id, label) {
         return {
             id,
             label
         }
     }
 
-    render() {
-        const {activeTab: activeTabId, onTabClick} = this.props;
+    const {activeTab: activeTabId, onTabClick} = props;
 
-        const buttonElements = this.buttons.map(({id, label}) => {
-            const clazz = id === activeTabId ? 'btn-info' : 'btn-outline-secondary';
-
-            return (
-                <button type="button"
-                        className={`btn ${clazz}`}
-                        onClick={() => onTabClick(id)}>
-                    {label}
-                </button>
-            );
-        })
+    const buttonElements = buttons.map(({id, label}) => {
+        const clazz = id === activeTabId ? 'btn-info' : 'btn-outline-secondary';
 
         return (
-            <div className="btn-group">
-                {buttonElements}
-            </div>
+            <button type="button"
+                    className={`btn ${clazz}`}
+                    onClick={() => onTabClick(id)}>
+                {label}
+            </button>
         );
-    }
+    });
+
+    return (
+        <div className="btn-group">
+            {buttonElements}
+        </div>
+    );
 }
+
+export default ItemStatusFilter;
